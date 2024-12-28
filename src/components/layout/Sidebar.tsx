@@ -1,8 +1,8 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, Users, DollarSign, Heart, LogOut } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/auth';
+import { cn } from "@/lib/utils";
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },

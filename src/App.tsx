@@ -7,8 +7,7 @@ import { Finance } from './pages/finance';
 import { Welfare } from './pages/welfare';
 import { Login } from './pages/auth/login';
 import { Register } from './pages/auth/register';
-import { AuthProvider } from './contexts/auth';
-import { useAuth } from './contexts/auth';
+import { AuthProvider, useAuth } from '@/contexts/auth';
 
 // Protected Route wrapper
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
