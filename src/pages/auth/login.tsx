@@ -30,6 +30,14 @@ export function Login() {
       await signIn(data.email, data.password);
     } catch (error) {
       console.error('Login failed:', error);
+      if (error instanceof Error) {
+        const errorMessage = error.message
+          .replace('AuthApiError: ', '')
+          .replace('Login failed: ', '');
+        alert(errorMessage);
+      } else {
+        alert('An unknown error occurred during login');
+      }
     }
   };
 

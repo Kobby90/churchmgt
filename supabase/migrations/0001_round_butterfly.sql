@@ -85,18 +85,56 @@ ALTER TABLE welfare_cases ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies
 
--- Members policies
-CREATE POLICY "Members can view their own profile"
-  ON members FOR SELECT
-  TO authenticated
-  USING (auth_id = auth.uid());
+-- Drop existing policies for members table
+DROP POLICY IF EXISTS "Allow member creation during signup" ON members;
+DROP POLICY IF EXISTS "Enable read access for authenticated users" ON members;
+DROP POLICY IF EXISTS "Enable update for users" ON members;
 
-CREATE POLICY "Admin can view all members"
+-- Create new policies
+CREATE POLICY "Allow member creation during signup"
+  ON members FOR INSERT
+  WITH CHECK (
+    -- Allow insert only if auth.uid() matches the auth_id being inserted
+    auth_id = auth.uid() OR
+    -- Or if no user is authenticated yet (during signup)
+    auth.uid() IS NULL
+  );
+
+CREATE POLICY "Enable read access for authenticated users"
   ON members FOR SELECT
   TO authenticated
-  USING (EXISTS (
-    SELECT 1 FROM members WHERE auth_id = auth.uid() AND role = 'admin'
-  ));
+  USING (
+    -- Users can read their own record
+    auth_id = auth.uid() OR
+    -- Admins can read all records
+    EXISTS (
+      SELECT 1 FROM members m
+      WHERE m.auth_id = auth.uid() 
+      AND m.role = 'admin'
+    )
+  );
+
+CREATE POLICY "Enable update for users"
+  ON members FOR UPDATE
+  USING (
+    -- Users can only update their own record
+    auth_id = auth.uid() OR
+    -- Admins can update any record
+    EXISTS (
+      SELECT 1 FROM members m
+      WHERE m.auth_id = auth.uid() 
+      AND m.role = 'admin'
+    )
+  )
+  WITH CHECK (
+    -- Same conditions for the new row
+    auth_id = auth.uid() OR
+    EXISTS (
+      SELECT 1 FROM members m
+      WHERE m.auth_id = auth.uid() 
+      AND m.role = 'admin'
+    )
+  );
 
 -- Family units policies
 CREATE POLICY "Members can view their family unit"
