@@ -10,6 +10,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  token: string | null;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   signUp: (email: string, password: string, userData: {
@@ -21,18 +22,19 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
 function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
+    const storedToken = localStorage.getItem('token');
+    if (storedToken) {
+      setToken(storedToken);
       fetch('/api/auth/me', {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${storedToken}`
         }
       })
       .then(res => res.json())
@@ -58,8 +60,9 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error(error.message || 'Login failed');
       }
 
-      const { token, user } = await response.json();
-      localStorage.setItem('token', token);
+      const { token: newToken, user } = await response.json();
+      localStorage.setItem('token', newToken);
+      setToken(newToken);
       setUser(user);
       navigate('/');
     } catch (error) {
@@ -72,6 +75,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     localStorage.removeItem('token');
+    setToken(null);
     setUser(null);
     navigate('/login');
   };
@@ -114,6 +118,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = {
     user,
     loading,
+    token,
     signIn,
     signOut,
     signUp

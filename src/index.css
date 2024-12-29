@@ -1,3 +1,29 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+  .modal-form-container {
+    @apply space-y-6;
+  }
+  
+  .modal-form-field {
+    @apply space-y-2;
+  }
+  
+  .modal-form-label {
+    @apply block text-sm font-medium text-gray-700;
+  }
+  
+  .modal-form-input {
+    @apply w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500;
+  }
+  
+  .modal-form-error {
+    @apply text-sm text-red-600;
+  }
+  
+  .modal-form-footer {
+    @apply flex justify-end space-x-3 pt-6;
+  }
+}

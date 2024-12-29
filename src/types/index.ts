@@ -36,9 +36,9 @@ export interface WelfareCase {
   member_id: string;
   title: string;
   description: string;
-  status: 'pending' | 'approved' | 'in_progress' | 'completed' | 'rejected';
   amount_requested: number;
   amount_approved?: number;
+  status: 'pending' | 'approved' | 'rejected';
   created_at: string;
   updated_at: string;
 }

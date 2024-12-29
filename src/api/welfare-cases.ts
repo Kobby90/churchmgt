@@ -8,21 +8,33 @@ const router = express.Router();
 // Get welfare cases
 router.get('/', authMiddleware, async (req, res) => {
   try {
+    if (!req.user?.id) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
     const { rows: memberRows } = await db.query(
       'SELECT role FROM members WHERE auth_id = $1',
       [req.user.id]
     );
 
+    if (!memberRows.length) {
+      return res.status(404).json({ error: 'Member not found' });
+    }
+
     const isAdmin = memberRows[0]?.role === 'admin' || memberRows[0]?.role === 'welfare_admin';
     
     const { rows } = await db.query(
-      `SELECT w.* FROM welfare_cases w
+      `SELECT w.*, m.first_name, m.last_name 
+       FROM welfare_cases w
        INNER JOIN members m ON w.member_id = m.id
-       WHERE m.auth_id = $1 ${isAdmin ? 'OR TRUE' : ''}`,
+       WHERE m.auth_id = $1 ${isAdmin ? 'OR TRUE' : ''}
+       ORDER BY w.created_at DESC`,
       [req.user.id]
     );
+    
     res.json(rows);
   } catch (error) {
+    console.error('Error fetching welfare cases:', error);
     res.status(500).json({ error: 'Failed to fetch welfare cases' });
   }
 });

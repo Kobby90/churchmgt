@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import router from './api';
+import usersRouter from './api/routes/users';
 
 // Load environment variables
 dotenv.config();
@@ -20,6 +21,7 @@ app.use(express.json());
 
 // API routes
 app.use('/api', router);
+app.use('/api/users', usersRouter);
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {

@@ -13,18 +13,32 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
     const token = authHeader.split(' ')[1];
     const { userId } = verifyToken(token);
 
-    const { rows } = await db.query(
+    // First check if user exists in auth table
+    const { rows: userRows } = await db.query(
+      'SELECT id FROM users WHERE id = $1',
+      [userId]
+    );
+
+
+    if (!userRows.length) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+
+    // Then get member details
+    const { rows: memberRows } = await db.query(
       'SELECT id, email, role FROM members WHERE auth_id = $1',
       [userId]
     );
 
-    if (!rows[0]) {
-      return res.status(404).json({ error: 'User not found' });
+    if (!memberRows.length) {
+      return res.status(401).json({ error: 'Member profile not found' });
     }
 
-    req.user = rows[0];
+    req.user = memberRows[0];
+    console.log('Auth middleware - User role:', req.user.role);
     next();
   } catch (error) {
+    console.error('Auth middleware error:', error);
     res.status(401).json({ error: 'Authentication failed' });
   }
 } 

@@ -1,14 +1,16 @@
 import React from 'react';
 import { Bell } from 'lucide-react';
 import { useAuth } from '@/contexts/auth';
+import { useSettings } from '@/contexts/settings';
 
 export function Header() {
   const { user } = useAuth();
+  const { settings } = useSettings();
 
   return (
     <header className="h-16 bg-white border-b border-gray-200 px-6 flex items-center justify-between">
       <div className="flex items-center space-x-4">
-        <h2 className="text-xl font-semibold text-gray-800">Welcome back</h2>
+        <h2 className="text-xl font-semibold text-gray-800">{settings.appName}</h2>
       </div>
       
       <div className="flex items-center space-x-4">
