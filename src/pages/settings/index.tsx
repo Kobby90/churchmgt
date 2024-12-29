@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "@/components/ui/use-toast";
+import { ToastProvider, Toast, ToastTitle, ToastDescription, ToastViewport } from "@/components/ui/toast-dialog";
 
 const settingsSchema = z.object({
   appName: z.string().min(1, 'Application name is required'),
@@ -39,25 +39,31 @@ export function Settings() {
   const { settings, updateSettings, loading } = useSettings();
   const form = useForm({
     resolver: zodResolver(settingsSchema),
-    defaultValues: settings,
-    values: settings
+    defaultValues: settings
   });
+
+  const [toastOpen, setToastOpen] = React.useState(false);
+  const [toastMessage, setToastMessage] = React.useState({ title: '', description: '' });
+
+  const showToast = (title: string, description: string) => {
+    setToastMessage({ title, description });
+    setToastOpen(true);
+  };
 
   const onSubmit = async (data: z.infer<typeof settingsSchema>) => {
     try {
-      console.log('Submitting settings:', data); // Debug log
+      console.log('Submitting settings:', data);
       await updateSettings(data);
-      toast({
-        title: "Success",
-        description: "Settings updated successfully",
-      });
+      showToast(
+        "Success",
+        "Settings updated successfully"
+      );
     } catch (error) {
       console.error('Failed to update settings:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update settings",
-        variant: "destructive",
-      });
+      showToast(
+        "Error",
+        error instanceof Error ? error.message : "Failed to update settings"
+      );
     }
   };
 
@@ -72,8 +78,8 @@ export function Settings() {
   }
 
   return (
-    <div className="space-y-6">
-      <form onSubmit={form.handleSubmit(onSubmit)}>
+    <>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold">Settings</h1>
           <Button type="submit">Save Changes</Button>
@@ -188,6 +194,22 @@ export function Settings() {
           </Card>
         </div>
       </form>
-    </div>
+
+      <ToastProvider>
+        <Toast 
+          open={toastOpen} 
+          onOpenChange={setToastOpen}
+          aria-describedby="toast-description"
+        >
+          <div>
+            <ToastTitle>{toastMessage.title}</ToastTitle>
+            <ToastDescription id="toast-description">
+              {toastMessage.description}
+            </ToastDescription>
+          </div>
+        </Toast>
+        <ToastViewport />
+      </ToastProvider>
+    </>
   );
 } 
