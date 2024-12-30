@@ -3,7 +3,7 @@ import { useSettings } from '@/contexts/settings';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Settings as SettingsIcon, Palette, Building, FileText } from 'lucide-react';
+import { Settings as SettingsIcon, Palette, Building, FileText, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ToastProvider, Toast, ToastTitle, ToastDescription, ToastViewport } from "@/components/ui/toast-dialog";
+import { useAuth } from '@/contexts/auth';
 
 const settingsSchema = z.object({
   appName: z.string().min(1, 'Application name is required'),
@@ -32,11 +33,80 @@ const settingsSchema = z.object({
   enableFamilyUnits: z.boolean(),
   enableDocumentSharing: z.boolean(),
   enableVersionControl: z.boolean(),
+  logoUrl: z.string(),
   defaultDocumentAccess: z.string()
 });
 
+function LogoUpload({ value, onChange }: { value: string; onChange: (url: string) => void }) {
+  const { token } = useAuth();
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!token) {
+      console.error('No auth token available');
+      throw new Error('Authentication required');
+    }
+
+    const formData = new FormData();
+    formData.append('logo', file);
+
+    try {
+      const response = await fetch('/api/settings/logo/upload', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to upload logo');
+      }
+      
+      const data = await response.json();
+      onChange(data.url);
+    } catch (error) {
+      console.error('Failed to upload logo:', error);
+      throw error;
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-4">
+        {value && (
+          <img 
+            src={value} 
+            alt="Logo" 
+            className="h-12 w-12 object-contain rounded-md border"
+          />
+        )}
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/gif"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+          <div className="px-4 py-2 border rounded-md hover:bg-gray-50 flex items-center gap-2">
+            <Upload className="h-4 w-4" />
+            Upload Logo
+          </div>
+        </label>
+      </div>
+    </div>
+  );
+}
+
 export function Settings() {
   const { settings, updateSettings, loading } = useSettings();
+  const { token } = useAuth();
+  
+  console.log('Settings Component - Current Settings:', settings);
+  console.log('Settings Component - Loading State:', loading);
+
   const form = useForm({
     resolver: zodResolver(settingsSchema),
     defaultValues: settings
@@ -52,8 +122,13 @@ export function Settings() {
 
   const onSubmit = async (data: z.infer<typeof settingsSchema>) => {
     try {
-      console.log('Submitting settings:', data);
-      await updateSettings(data);
+      console.log('Starting settings submission:', data);
+      const updatedSettings = await updateSettings(data);
+      console.log('Settings update response:', updatedSettings);
+      
+      // Reset form with new values
+      form.reset(updatedSettings);
+      
       showToast(
         "Success",
         "Settings updated successfully"
@@ -68,24 +143,58 @@ export function Settings() {
   };
 
   React.useEffect(() => {
-    if (settings) {
+    console.log('Settings Component - Mount effect');
+    console.log('Token available:', !!token);
+  }, [token]);
+
+  React.useEffect(() => {
+    console.log('Settings Component - Settings/Loading changed:', {
+      hasSettings: !!settings,
+      loading,
+      settingsKeys: settings ? Object.keys(settings) : []
+    });
+    
+    if (settings && !loading) {
+      console.log('Settings Component - Updating form with:', settings);
       form.reset(settings);
     }
-  }, [settings, form]);
+  }, [settings, loading, form.reset]);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   return (
-    <>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+    <div className="h-full">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="h-full p-6 space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold">Settings</h1>
           <Button type="submit">Save Changes</Button>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Upload className="h-5 w-5" />
+                Logo Settings
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div>
+                <label className="text-sm font-medium">Organization Logo</label>
+                <LogoUpload
+                  value={form.watch('logoUrl')}
+                  onChange={(url) => form.setValue('logoUrl', url)}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -210,6 +319,6 @@ export function Settings() {
         </Toast>
         <ToastViewport />
       </ToastProvider>
-    </>
+    </div>
   );
 } 

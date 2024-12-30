@@ -34,12 +34,27 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
       setToken(storedToken);
       fetch('/api/auth/me', {
         headers: {
-          'Authorization': `Bearer ${storedToken}`
+          'Authorization': `Bearer ${storedToken}`,
+          'Accept': 'application/json'
         }
       })
-      .then(res => res.json())
+      .then(async res => {
+        if (!res.ok) {
+          // If token is invalid, clear it
+          if (res.status === 401) {
+            localStorage.removeItem('token');
+            setToken(null);
+            setUser(null);
+          }
+          throw new Error('Failed to fetch user profile');
+        }
+        return res.json();
+      })
       .then(data => {
         if (data.user) setUser(data.user);
+      })
+      .catch(error => {
+        console.error('Auth profile fetch error:', error);
       })
       .finally(() => setLoading(false));
     } else {

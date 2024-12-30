@@ -12,13 +12,11 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: 'http://localhost:3000', // Your backend server URL
         changeOrigin: true,
         secure: false,
       },
     },
   },
-  optimizeDeps: {
-    exclude: ['lucide-react'],
-  },
 });
+

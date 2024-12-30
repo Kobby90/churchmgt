@@ -19,7 +19,19 @@ INSERT INTO settings (key, value, category, description) VALUES
   ('currency_format', '"USD"', 'general', 'Default currency format'),
   ('enable_notifications', 'true', 'features', 'Enable system notifications'),
   ('enable_welfare', 'true', 'features', 'Enable welfare management module'),
-  ('enable_family_units', 'true', 'features', 'Enable family units management');
+  ('enable_family_units', 'true', 'features', 'Enable family units management'),
+  ('enable_document_sharing', 'true', 'features', 'Enable document sharing functionality'),
+  ('enable_version_control', 'true', 'features', 'Enable document version control'),
+  ('default_document_access', '"members"', 'features', 'Default access level for new documents')
+  ON CONFLICT (key) DO NOTHING;
+
+-- Add new settings if they don't exist
+INSERT INTO settings (key, value, category, description)
+VALUES 
+  ('enable_document_sharing', 'true', 'features', 'Enable document sharing functionality'),
+  ('enable_version_control', 'true', 'features', 'Enable document version control'),
+  ('default_document_access', '"members"', 'features', 'Default access level for new documents')
+ON CONFLICT (key) DO NOTHING;
 
 -- Add trigger for settings
 CREATE TRIGGER update_settings_updated_at

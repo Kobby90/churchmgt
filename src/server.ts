@@ -5,6 +5,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import router from './api';
 import usersRouter from './api/routes/users';
+import settingsRouter from './api/routes/settings';
+import logoRouter from './api/routes/settings/logo';
 
 // Load environment variables
 dotenv.config();
@@ -16,12 +18,17 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true
+}));
 app.use(express.json());
 
 // API routes
 app.use('/api', router);
 app.use('/api/users', usersRouter);
+app.use('/api/settings', settingsRouter);
+app.use('/api/settings/logo', logoRouter);
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {

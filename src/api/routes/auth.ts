@@ -1,6 +1,6 @@
 import express from 'express';
-import { db } from '../../lib/db';
-import { createToken, verifyToken } from '../../lib/auth';
+import { db } from '@/lib/db';
+import { createToken, verifyToken } from '@/middleware/auth';
 import bcrypt from 'bcrypt';
 
 const router = express.Router();
